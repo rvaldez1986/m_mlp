@@ -24,7 +24,7 @@ def batch_generator(X, Y, batch_size):
 
 
 def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs, 
-            batch_size, iter_to_avg, lr, PATH, device):
+            batch_size, iter_to_avg, lr, clipping, PATH, device):
     
     net = net.to(device)
     
@@ -57,6 +57,9 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs,
                 outputs = net.forward(inputs)
                 loss = error(outputs, labels)
                 loss.backward()
+                
+                torch.nn.utils.clip_grad_norm_(net.parameters(), clipping)
+                
                 optimizer.step()
     
                 # print statistics
