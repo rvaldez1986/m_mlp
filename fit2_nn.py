@@ -24,7 +24,7 @@ def batch_generator(X, Y, batch_size):
 
 
 def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs, 
-            batch_size, iter_to_avg, lr, clipping, PATH, device):
+            batch_size, iter_to_avg, lr, clipping, PATH, device, verbose):
     
     net = net.to(device)
     
@@ -66,15 +66,18 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs,
                 running_loss += loss.item()
         
         val_outputs = net.forward(val_inputs)
-        val_loss = error(val_outputs, val_labels)    
-           
-        print('Epoch {0}: Training Loss: {1}, Validation Loss: {2}'.format(epoch+1, running_loss/iter_to_avg, val_loss.item()))
+        val_loss = error(val_outputs, val_labels)  
+        
+        if verbose == 1:
+            print('Epoch {0}: Training Loss: {1}, Validation Loss: {2}'\
+                  .format(epoch+1, running_loss/iter_to_avg, val_loss.item()))
         losses.append(running_loss/iter_to_avg)
         val_losses.append(val_loss.item())
         
         if val_loss < min_val_loss:
             torch.save(net.state_dict(), PATH)
-            print('New Checkpoint Saved into PATH')
+            if verbose == 1:
+                print('New Checkpoint Saved into PATH')
             min_val_loss = val_loss
     
     
