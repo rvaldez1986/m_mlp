@@ -26,7 +26,15 @@ def batch_generator(X, Y, n_batches):
         Y_batch = Y[bi]
         idx = [i for i in idx if i not in bi]
         yield (X_batch,Y_batch) 
-
+        
+        
+def comb_error(output, target, sig2):
+    output = (output + 0.0001)*0.999
+    logErr1 = -1 * torch.log(output) * target[:,0].view(1,-1).t()
+    logErr2 = -1 * torch.log(1 - output) * (1 - target[:,0].view(1,-1)).t()
+    mseErr = torch.pow(target - output, 2) * (1 - target[:,0].view(1,-1)).t()
+    return (1/output.shape[0]) * (torch.sum(logErr1,dim=0)[0] + torch.sum(logErr2,dim=0)[0] + 
+                                                                        (1/(2*sig2))*torch.sum(mseErr,dim=0)[1])
 
 
 def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs, 
