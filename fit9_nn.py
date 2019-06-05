@@ -40,11 +40,20 @@ def comb_error(output, target, sig2):
     logErr2 = -1 * torch.sum(logErr2)
     mseErr = torch.sum(mseErr)    
     
-    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig2)*mseErr)    
+    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig2)*mseErr) 
+
+
+def mae_error(output, target):
+    y = target[:,1]
+    p = output[:,0]
+    f2 = output[:,1]
+    yhat = (1-p)*f2
+    MAE = np.mean(np.absolute(y - yhat))
+    return MAE    
 
 
 
-def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs, 
+def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs, 
             n_batches, batch_to_avg, ep_to_check, clipping, PATH, device, verbose, min_val_loss = float('inf')):
     
     torch.manual_seed(0)
@@ -99,23 +108,20 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs,
         with torch.no_grad():
             net.eval()
             val_outputs = net.forward(val_inputs)
-            #val_loss = error(val_outputs, val_labels)
+            
             val_outputs2, val_labels2 = val_outputs.cpu(), val_labels.cpu()
             val_outputs2, val_labels2 = val_outputs2.numpy(), val_labels2.numpy()
-            y_val = val_labels2[:,1]
-            p_val = val_outputs2[:,0]
-            f2_val = val_outputs2[:,1]
-            yhat_val = (1-p_val)*f2_val
-            #RMSE_val = np.sqrt(np.mean((y_val - yhat_val)**2))            
-            MAE_val = np.mean(np.absolute(y_val - yhat_val))
+            
+            val_loss = val_error(val_outputs2, val_labels2)
+           
         
         losses.append(running_loss)
-        val_losses.append(MAE_val)        
+        val_losses.append(val_loss)        
         
         
         if verbose == 1:
             print('Epoch {0}: Training Loss: {1}, Validation Loss: {2}'\
-                  .format(epoch+1, running_loss, MAE_val))
+                  .format(epoch+1, running_loss, val_loss))
         
         
         

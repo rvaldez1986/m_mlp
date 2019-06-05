@@ -40,11 +40,20 @@ def comb_error(output, target, sig2):
     logErr2 = -1 * torch.sum(logErr2)
     mseErr = torch.sum(mseErr)    
     
-    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig2)*mseErr)    
+    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig2)*mseErr) 
+   
+
+def mae_error(output, target):
+    y = target[:,1]
+    p = output[:,0]
+    f2 = output[:,1]
+    yhat = (1-p)*f2
+    MAE = np.mean(np.absolute(y - yhat))
+    return MAE    
 
 
 
-def fit(X, X_val, Y, Y_val, net, optimizer, error, n_epochs, 
+def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs, 
             n_batches, batch_to_avg, ep_to_check, clipping, PATH, device, verbose, min_val_loss = float('inf')):
     
     torch.manual_seed(0)
