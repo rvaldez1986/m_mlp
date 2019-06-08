@@ -13,16 +13,17 @@ import random
 def batch_generator(X, Y, n_batches):  
     
     random.seed(0)
+    np.random.seed(0)
     
     batch_size = X.shape[0] // n_batches
     
-    idx = list(X.index)
+    idx = list(range(X.shape[0]))
     random.shuffle(idx)    
     idx = idx[:n_batches*batch_size]
         
     for i in range(n_batches):            
         bi = np.random.choice(idx, batch_size, replace=False)
-        X_batch = X.loc[bi]
+        X_batch = X[bi]
         Y_batch = Y[bi]
         idx = [i for i in idx if i not in bi]
         yield (X_batch,Y_batch)
@@ -83,7 +84,7 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs,
     losses = []
     val_losses = []
 
-    val_inputs = torch.FloatTensor(X_val.values)
+    val_inputs = torch.FloatTensor(X_val)
     val_labels = torch.FloatTensor(Y_val)
     val_inputs, val_labels = val_inputs.to(device), val_labels.to(device)    
     
@@ -103,7 +104,7 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs,
                        
             net.train()
             # get the inputs
-            inputs = torch.FloatTensor(batch_x.values)
+            inputs = torch.FloatTensor(batch_x)
             labels = torch.FloatTensor(batch_y)
             inputs, labels = inputs.to(device), labels.to(device)             
                 

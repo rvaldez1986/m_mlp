@@ -2,7 +2,7 @@
 """
 Created on Mon Apr 22 14:00:19 2019
 
-@author: rober
+@author: roberto valdez
 """
 
 import numpy as np
@@ -13,6 +13,7 @@ import random
 def batch_generator(X, Y, n_batches):  
     
     random.seed(0)
+    np.random.seed(0)
     
     batch_size = X.shape[0] // n_batches
     
@@ -28,50 +29,32 @@ def batch_generator(X, Y, n_batches):
         yield (X_batch,Y_batch)
         
         
-def comb_error(output, target, sig2):
-    output = (output + 0.0001)*0.999 #help avoid numerical errors
-    p = target[:,0]
+def comb_error(output, target, sig1, sig2):
+    output = (output + 0.0001)*0.999
+    p0 = target[:,0]
+    p1 = target[:,1]
+    p2 = target[:,2]
     
-    logErr1 = torch.mul(torch.log(output[:,0]), p)
-    logErr2 = torch.mul(torch.log(1 - output[:,0]) , (1 - p))
-    mseErr = torch.mul(torch.pow(target[:,1] - output[:,1], 2), (1 - p))
+    logErr0 = torch.mul(torch.log(output[:,0]), p0)
+    logErr1 = torch.mul(torch.log(output[:,1]), p1)
+    logErr2 = torch.mul(torch.log(output[:,2]), p2)
+    mseErr1 = torch.mul(torch.pow(target[:,2+1] - output[:,2+1], 2), p1)
+    mseErr2 = torch.mul(torch.pow(target[:,2+2] - output[:,2+2], 2), p2)   
     
+    logErr0 = -1 * torch.sum(logErr0)
     logErr1 = -1 * torch.sum(logErr1)
     logErr2 = -1 * torch.sum(logErr2)
-    mseErr = torch.sum(mseErr)    
+    mseErr1 = torch.sum(mseErr1)    
+    mseErr2 = torch.sum(mseErr2)      
     
-    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig2)*mseErr) 
+    return (1/output.shape[0]) * (logErr1 + logErr2 + (1/sig1)*mseErr1 + (1/sig2)*mseErr2)    
+   
 
 
 def mae_error(output, target):
-    y = target[:,1]
-    p = output[:,0]
-    f2 = output[:,1]
-    yhat = (1-p)*f2
-    MAE = np.mean(np.absolute(y - yhat))
-    return MAE    
-
-
-def fmapper(x):
-    y = x.copy()
-    y[x<9] = 1
-    y[(x>=9) & (x<53)] = 2
-    y[(x>=53) & (x<172)] = 3
-    y[x>=172] = 4  
-    return y
-
-
-def hrat_error(output, target):
-    y = target[:,1]
-    p = output[:,0]    
     
-    f2 = output[:,1]
-    yhat = (1-(p>0.5)*1)*f2
-    
-    yhat = fmapper(yhat)
-    y = fmapper(y)    
-    hr = sum((yhat==y)*1)/len(y)
-    return (1-hr) 
+
+
 
 
 def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs, 
@@ -83,7 +66,7 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs,
     losses = []
     val_losses = []
 
-    val_inputs = torch.FloatTensor(X_val.values)
+    val_inputs = torch.FloatTensor(X_val.values) 
     val_labels = torch.FloatTensor(Y_val)
     val_inputs, val_labels = val_inputs.to(device), val_labels.to(device)    
     
@@ -103,8 +86,8 @@ def fit(X, X_val, Y, Y_val, net, optimizer, error, val_error, n_epochs,
                        
             net.train()
             # get the inputs
-            inputs = torch.FloatTensor(batch_x.values)
-            labels = torch.FloatTensor(batch_y)
+            inputs = torch.FloatTensor(batch_x.values)  #it is a pandas data frame
+            labels = torch.FloatTensor(batch_y)  
             inputs, labels = inputs.to(device), labels.to(device)             
                 
     
